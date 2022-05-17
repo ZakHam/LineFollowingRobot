@@ -1,8 +1,8 @@
 #ifndef __SPI_H__
 #define __SPI_H__
 
-void init_spi();
+void spi_init();
 
-void send_data(unsigned char data);
+void spi_send_byte(unsigned char data);
 
 #endif // __SPI_H__

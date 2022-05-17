@@ -2,27 +2,25 @@
 
 #include <avr/io.h>
 
-#include "util.h"
-
-void init_adc() {
+void adc_init() {
   // Configure the ADC
   // Set reference to AVcc = 5V
-  ADMUX |= BIT(REFS0);
+  ADMUX |= _BV(REFS0);
 
   // Disable the digital input buffer on ADC 0
-  DIDR0 |= BIT(ADC0D);
+  DIDR0 |= _BV(ADC0D);
 
   // Enable the ADC, and set the clock pre-scaler to 128.
-  ADCSRA |= BIT(ADEN) | BIT(ADPS2) | BIT(ADPS1) | BIT(ADPS0);
+  ADCSRA |= _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 
   // Trigger an initial sample, as the first sample takes 25 clock cycles, not 13
-  ADCSRA |= BIT(ADSC);
+  ADCSRA |= _BV(ADSC);
 
-  while (ADCSRA & BIT(ADSC))
+  while (ADCSRA & _BV(ADSC))
     ;
 }
 
-int sample_adc(unsigned char channel) {
+int adc_sample(unsigned char channel) {
   if (channel < 0 || channel > 7) {
     return -1;
   }
@@ -31,13 +29,13 @@ int sample_adc(unsigned char channel) {
   ADMUX &= 0xF0;
 
   // Set the ADC channel
-  ADMUX |= BIT(channel);
+  ADMUX |= _BV(channel);
 
   // Trigger the conversion
-  ADCSRA |= BIT(ADSC);
+  ADCSRA |= _BV(ADSC);
 
   // Wait for the result
-  while (ADCSRA & BIT(ADSC))
+  while (ADCSRA & _BV(ADSC))
     ;
 
   return ADC;

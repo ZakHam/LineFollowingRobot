@@ -2,22 +2,20 @@
 
 #include <avr/io.h>
 
-#include "util.h"
-
-void init_spi() {
+void spi_init() {
   // Set MOSI, SCK as output
-  DDRB |= BIT(DDB5) | BIT(DDB3);
+  DDRB |= _BV(DDB5) | _BV(DDB3);
 
   // Set clock divider to 2, for 8MHz
-  SPSR = BIT(SPI2X);
+  SPSR = _BV(SPI2X);
 
   // Enable SPI, set MASTER mode
-  SPCR = BIT(SPE) | BIT(MSTR) | BIT(SPI2X);
+  SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPI2X);
 }
 
-void send_data(unsigned char data) {
+void spi_send_byte(unsigned char data) {
   SPDR = data;
 
-  while (!(SPSR & BIT(SPIF)))
+  while (!(SPSR & _BV(SPIF)))
     ;
 }

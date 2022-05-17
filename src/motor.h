@@ -1,10 +1,10 @@
 #ifndef __MOTOR_H__
 #define __MOTOR_H__
 
-void init_motors();
+void motors_init();
 
-void enable_motor_1(unsigned char enabled);
-void enable_motor_2(unsigned char enabled);
+void motor_1_enable(unsigned char enabled);
+void motor_2_enable(unsigned char enabled);
 
 void motor_1_forwards();
 void motor_1_backwards();

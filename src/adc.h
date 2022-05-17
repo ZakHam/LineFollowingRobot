@@ -1,8 +1,8 @@
 #ifndef __ADC_H__
 #define __ADC_H__
 
-void init_adc();
+void adc_init();
 
-int sample_adc(unsigned char channel);
+int adc_sample(unsigned char channel);
 
 #endif // __ADC_H__
