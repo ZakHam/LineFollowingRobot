@@ -18,7 +18,7 @@ void motors_init() {
   motor_2_enable(1);
 }
 
-void motor_1_enable(unsigned char enabled) {
+void motor_1_enable(bool enabled) {
   if (enabled) {
     PORTD |= _BV(MOTOR_1_ENABLE);
   } else {
@@ -26,7 +26,7 @@ void motor_1_enable(unsigned char enabled) {
   }
 }
 
-void motor_2_enable(unsigned char enabled) {
+void motor_2_enable(bool enabled) {
   if (enabled) {
     PORTD |= _BV(MOTOR_2_ENABLE);
   } else {

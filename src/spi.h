@@ -1,8 +1,10 @@
 #ifndef __SPI_H__
 #define __SPI_H__
 
+#include <stdint.h>
+
 void spi_init();
 
-void spi_send_byte(unsigned char data);
+unsigned char spi_send_byte(uint8_t data);
 
 #endif // __SPI_H__

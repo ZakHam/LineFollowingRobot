@@ -20,7 +20,7 @@ void adc_init() {
     ;
 }
 
-int adc_sample(unsigned char channel) {
+int16_t adc_sample(uint8_t channel) {
   if (channel < 0 || channel > 7) {
     return -1;
   }
