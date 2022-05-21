@@ -11,24 +11,24 @@
 void spi_init() {
   // Wrap the init in a no interrupt block
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    // Set SS as output
-    DDRB |= _BV(SS);
-
     // Write the slave select high
     PORTB |= _BV(SS);
+
+    // Set SS as output
+    DDRB |= _BV(SS);
 
     // Set clock divider to 2, for 8MHz
     SPSR = _BV(SPI2X);
 
-    // Enable SPI interrupts, SPI, MSB first, set MASTER mode
-    SPCR = _BV(SPE) | _BV(DORD) | _BV(MSTR);
+    // Enable SPI, set MASTER mode
+    SPCR = _BV(SPE) | _BV(MSTR);
 
-    // Set SCK, MOST to output after enabling to avoid reading a bit erroneously
+    // Set SCK, MOSI to output after enabling to avoid reading a bit erroneously
     DDRB |= _BV(SCK) | _BV(MOSI);
   }
 }
 
-unsigned char spi_send_byte(uint8_t data) {
+uint8_t spi_send_byte(uint8_t data) {
   // Set the data to write
   SPDR = data;
 

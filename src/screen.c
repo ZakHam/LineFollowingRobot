@@ -11,24 +11,13 @@
 #define RST PB1
 #define SS PB2
 
-#define SCREEN_CMD_READRAM 0x5D        ///< Not currently used
-#define SCREEN_CMD_SETREMAP 0xA0       ///< See datasheet
-#define SCREEN_CMD_STARTLINE 0xA1      ///< See datasheet
-#define SCREEN_CMD_DISPLAYALLOFF 0xA4  ///< Not currently used
-#define SCREEN_CMD_DISPLAYALLON 0xA5   ///< Not currently used
-#define SCREEN_CMD_INVERTDISPLAY 0xA7  ///< See datasheet
-#define SCREEN_CMD_DISPLAYENHANCE 0xB2 ///< Not currently used
-#define SCREEN_CMD_SETGRAY 0xB8        ///< Not currently used
-#define SCREEN_CMD_USELUT 0xB9         ///< Not currently used
-#define SCREEN_CMD_PRECHARGELEVEL 0xBB ///< Not currently used
-#define SCREEN_CMD_HORIZSCROLL 0x96    ///< Not currently used
-#define SCREEN_CMD_STOPSCROLL 0x9E     ///< Not currently used
-#define SCREEN_CMD_STARTSCROLL 0x9F    ///< Not currently used
-
 #define SCREEN_CMD_SETCOLUMN 0x15      // Set the start and end range for the current column
 #define SCREEN_CMD_WRITERAM 0x5c       // Set the screen into data receive mode, until next command
 #define SCREEN_CMD_SETROW 0x75         // Set the start and end range for the current row
+#define SCREEN_CMD_SETREMAP 0xa0       // Set remapping / colour depth
+#define SCREEN_CMD_STARTLINE 0xa1      // Set the starting row
 #define SCREEN_CMD_DISPLAYOFFSET 0xa2  // Set the screen offset (row offset, always 0?)
+#define SCREEN_CMD_DISPLAYALLON 0xA5   // Turn every pixel on
 #define SCREEN_CMD_NORMALDISPLAY 0xa6  // Reset to normal display
 #define SCREEN_CMD_FUNCTIONSELECT 0xab // Enable or disable internal VDD regulator
 #define SCREEN_CMD_DISPLAYOFF 0xae     // Turn the screen off (sleep mode on)
@@ -51,14 +40,16 @@ void send_command(uint8_t command_byte, const uint8_t *data, uint8_t num_data_by
 void set_draw_window(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 
 void screen_init() {
+  // Set SS and DC output high
+  DDRB |= _BV(SS) | _BV(DC);
+  PORTB |= _BV(SS) | _BV(DC);
+
   // Initialise the SPI
   spi_init();
 
-  // Initialise the DC and RST pins
-  DDRB |= _BV(DC) | _BV(RST);
-
-  // Write DC high (data mode), and write reset high
-  PORTB |= _BV(DC) | _BV(RST);
+  // Initialise the RST pin
+  DDRB |= _BV(RST);
+  PORTB |= _BV(RST);
 
   // Write reset low, then high to clear the screen
   _delay_ms(100);
@@ -82,7 +73,7 @@ void screen_end_write() {
 }
 
 void screen_write_pixel(uint8_t x, uint8_t y, uint16_t colour) {
-  if ((x >= 0) && (x <= 128) && (y > 0) && (y < 128)) {
+  if ((x >= 0) && (x < 128) && (y >= 0) && (y < 128)) {
     // Set the drawing window
     set_draw_window(x, y, 1, 1);
 
@@ -111,10 +102,10 @@ static const uint8_t PROGMEM startup_sequence[] = {
     0xf1,
     SCREEN_CMD_MUXRATIO, // Set the mux ratio (how many rows to actually draw)
     1,
-    127,
+    0x7f,
     SCREEN_CMD_DISPLAYOFFSET, // Set the screen row offset to zero
     1,
-    0x0,
+    0x00,
     SCREEN_CMD_SETGPIO, // Set both GPIO pins to high impedance input
     1,
     0x00,
@@ -131,22 +122,28 @@ static const uint8_t PROGMEM startup_sequence[] = {
     0,
     SCREEN_CMD_CONTRASTABC, // Set the contrast of ABC (not sure what ABC are)
     3,
-    0xC8, // 0b11001000
+    0xc8, // 0b11001000
     0x80, // 0b10000000
-    0xC8, // 0b11001000
+    0xc8, // 0b11001000
     SCREEN_CMD_CONTRASTMASTER,
     1,
-    0x0F,
+    0x0f,
     SCREEN_CMD_SETVSL, // Set VSL, this is just the values from the datasheet
     3,
-    0xA0,                  // 0b10100000
-    0xB5,                  // 0b10110101
+    0xa0,                  // 0b10100000
+    0xb5,                  // 0b10110101
     0x55,                  // 0b01010101
     SCREEN_CMD_PRECHARGE2, // Set the phase 3 length (as low as possible
     1,
     0x01,                 // Phase 3: 0b0001 (1) == 1 DCLKs
     SCREEN_CMD_DISPLAYON, // Turn the screen on
     0,
+    SCREEN_CMD_SETREMAP, // Scan bottom up, 65k colours
+    1,
+    0x74, // 0b01110100, (01) -> 65k colour, (1) -> COM split (odd/even), (1) -> row 128 -> 0
+    SCREEN_CMD_STARTLINE,
+    1,
+    0x80,
     0}; // End of initialisation sequence
 
 void perform_startup_sequence() {
@@ -191,8 +188,8 @@ void send_command(uint8_t command_byte, const uint8_t *data, uint8_t num_data_by
 
   // Send each byte in the provided array
   for (int i = 0; i < num_data_bytes; i++) {
-    spi_send_byte(*data);
-    data++;
+    uint8_t current_data_byte = pgm_read_byte(data++);
+    spi_send_byte(current_data_byte);
   }
 
   // Write the chip select high to deselect the screen

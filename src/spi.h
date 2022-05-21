@@ -5,6 +5,6 @@
 
 void spi_init();
 
-unsigned char spi_send_byte(uint8_t data);
+uint8_t spi_send_byte(uint8_t data);
 
 #endif // __SPI_H__

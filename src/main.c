@@ -1,37 +1,36 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <util/delay.h>
 
 #include <stdint.h>
 
 #include "screen.h"
+#include "spi.h"
 #include "usart.h"
 
 int main() {
-  DDRB = _BV(DDB5);
   usart_init();
-
-  screen_init();
 
   // Global enable interrupts
   sei();
 
-  usart_write_string("Starting write\n");
+  screen_init();
+
   screen_start_write();
-
-  usart_write_string("Writing pixels\n");
-  screen_write_pixel(10, 10, 0xFFFF);
-  screen_write_pixel(11, 11, 0xFFFF);
-  screen_write_pixel(20, 20, 0x3F2F);
-  screen_write_pixel(30, 30, 0x0000);
-
-  usart_write_string("Ending write\n");
+  for (int i = 0; i < 128; i++) {
+    for (int j = 0; j < 128; j++) {
+      screen_write_pixel(i, j, 0xffff);
+    }
+  }
+  for (int i = 50; i < 60; i++) {
+    for (int j = 60; j < 90; j++) {
+      screen_write_pixel(i, j, 0xa932);
+    }
+  }
   screen_end_write();
 
   while (1) {
-    int c = usart_read_byte();
-    if (c >= 0) {
-      usart_write_byte((uint8_t)c);
-    }
+    _delay_ms(1000);
   }
 
   return 0;
