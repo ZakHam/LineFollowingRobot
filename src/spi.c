@@ -40,3 +40,7 @@ uint8_t spi_send_byte(uint8_t data) {
   // Return the data received
   return SPDR;
 }
+
+uint16_t spi_send_double_byte(uint16_t data) {
+  return (spi_send_byte(data >> 8) << 8) | spi_send_byte(data);
+}

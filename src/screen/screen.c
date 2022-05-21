@@ -6,10 +6,9 @@
 
 #include "spi.h"
 
-// Data / command select pin
-#define DC PB0
-#define RST PB1
-#define SS PB2
+#define DC PB0  // Data / command select pin
+#define RST PB1 // Reset pin
+#define SS PB2  // Slave select pin
 
 #define SCREEN_CMD_SETCOLUMN 0x15      // Set the start and end range for the current column
 #define SCREEN_CMD_WRITERAM 0x5c       // Set the screen into data receive mode, until next command
@@ -28,7 +27,7 @@
 #define SCREEN_CMD_SETGPIO 0xb5        // Set the GPIO pins
 #define SCREEN_CMD_PRECHARGE2 0xb6     // Screen waveform phase 3 charge length
 #define SCREEN_CMD_VCOMH 0xbe          // Set the high voltage of common pins (wrt Vcc)
-#define SCREEN_CMD_CONTRASTABC 0xc1    // Set the contrast of ABC (colour channels?)
+#define SCREEN_CMD_CONTRASTABC 0xc1    // Set the contrast of ABC (colour channels, RGB I think?)
 #define SCREEN_CMD_CONTRASTMASTER 0xc7 // The master contrast scale from 1 -> 16.
 #define SCREEN_CMD_MUXRATIO 0xca       // Set the multiplex ratio (how many rows to draw, 128 def.)
 #define SCREEN_CMD_COMMANDLOCK 0xfd    // Used to lock / unlock screen from receiving commands
@@ -38,6 +37,7 @@ void perform_startup_sequence();
 void write_command(uint8_t command_byte);
 void send_command(uint8_t command_byte, const uint8_t *data, uint8_t num_data_bytes);
 void set_draw_window(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+void draw_colour(uint16_t colour, uint16_t length);
 
 void screen_init() {
   // Set SS and DC output high
@@ -73,14 +73,31 @@ void screen_end_write() {
 }
 
 void screen_write_pixel(uint8_t x, uint8_t y, uint16_t colour) {
-  if ((x >= 0) && (x < 128) && (y >= 0) && (y < 128)) {
-    // Set the drawing window
+  if ((x < SCREEN_WIDTH) && (y < SCREEN_HEIGHT)) {
     set_draw_window(x, y, 1, 1);
 
     // Write the colour, 8 high bits, followed by 8 low bits
-    spi_send_byte(colour >> 8);
-    spi_send_byte(colour);
+    spi_send_double_byte(colour);
   }
+}
+
+void screen_write_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour) {
+  // Can't draw off the screen
+  if ((x >= SCREEN_WIDTH) || (y >= SCREEN_HEIGHT)) {
+    return;
+  }
+
+  // Trim the width and height if they're off the right / bottom of the screen
+  if ((x + w) >= SCREEN_WIDTH) {
+    w = w - ((x + w) - (SCREEN_WIDTH - 1));
+  }
+
+  if ((y + h) >= SCREEN_HEIGHT) {
+    h = h - ((y + h) - (SCREEN_HEIGHT - 1));
+  }
+
+  set_draw_window(x, y, w, h);
+  draw_colour(colour, w * h);
 }
 
 // Use PROGMEM to specify that this is stored in program space, the startup sequence is ordered as
@@ -212,4 +229,10 @@ void set_draw_window(uint16_t x, uint16_t y, uint16_t width, uint16_t height) {
 
   // Start a ram write
   write_command(SCREEN_CMD_WRITERAM);
+}
+
+void draw_colour(uint16_t colour, uint16_t length) {
+  while (length--) {
+    spi_send_double_byte(colour);
+  }
 }
