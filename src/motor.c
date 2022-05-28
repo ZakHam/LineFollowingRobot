@@ -4,12 +4,12 @@
 
 #define MOTOR_OUTPUT_PINS 0xfc
 
-#define MOTOR_1_ENABLE DDD2
+#define MOTOR_1_ENABLE DDD6
 #define MOTOR_1_FORWARD DDD7
-#define MOTOR_1_BACKWARD DDD6
+#define MOTOR_1_BACKWARD DDD5
 
 #define MOTOR_2_ENABLE DDD3
-#define MOTOR_2_FORWARD DDD5
+#define MOTOR_2_FORWARD DDD2
 #define MOTOR_2_BACKWARD DDD4
 
 void motors_init() {

@@ -2,7 +2,10 @@
 #include <util/delay.h>
 
 #include <stdint.h>
+#include <stdio.h>
 
+#include "adc.h"
+#include "motor.h"
 #include "screen/screen.h"
 #include "usart.h"
 
@@ -17,6 +20,7 @@
 
 int main() {
   usart_init();
+  adc_init();
 
   // Global enable interrupts
   sei();
@@ -25,19 +29,17 @@ int main() {
 
   uint16_t colours[] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE};
   screen_start_write();
-  int col_index = 0;
-  for (int i = 0; i < 128; i += 32) {
-    for (int j = 0; j < 128; j += 32) {
-      screen_write_rect(i, j, 32, 32, colours[col_index]);
-      col_index++;
-      if (col_index == 8) {
-        col_index = 0;
-      }
-    }
-  }
+  screen_write_rect(0, 0, 129, 128, BLACK);
   screen_end_write();
 
+  char buf[21];
   while (1) {
+    const int val = adc_sample(0);
+    sprintf(buf, "ADC: %d", val);
+    screen_start_write();
+    screen_write_rect(60, 32, 60, 8, BLACK);
+    screen_write_string(60, 32, buf, WHITE, false);
+    screen_end_write();
     _delay_ms(1000);
   }
 

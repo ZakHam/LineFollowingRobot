@@ -4,6 +4,7 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
+#include "font.h"
 #include "spi.h"
 
 #define DC PB0  // Data / command select pin
@@ -98,6 +99,40 @@ void screen_write_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t 
 
   set_draw_window(x, y, w, h);
   draw_colour(colour, w * h);
+}
+
+void screen_write_character(uint8_t x, uint8_t y, uint8_t character, uint16_t colour) {
+  // Character doesn't fit on screen
+  if (((x + FONT_X) >= SCREEN_WIDTH) || ((y + FONT_Y) >= SCREEN_HEIGHT)) {
+    return;
+  }
+
+  for (int col = 0; col < 5; col++) {
+    uint8_t line = pgm_read_byte(&font[character * 5 + col]);
+    for (int row = 0; row < 8; row++, line >>= 1) {
+      if (line & 0x01) {
+        screen_write_pixel(x + col, y + row, colour);
+      }
+    }
+  }
+}
+
+void screen_write_string(uint8_t x, uint8_t y, const char *string, uint16_t colour, bool wrap) {
+  int char_count = 0;
+  int line_count = 0;
+  while (*string) {
+    if (wrap) {
+      // Character doesn't fit on screen
+      if ((x + FONT_X + (char_count * FONT_X)) >= SCREEN_WIDTH) {
+        char_count = 0;
+        line_count++;
+      }
+    }
+
+    screen_write_character(x + char_count * FONT_X, y + line_count * FONT_Y, *string, colour);
+    char_count++;
+    string++;
+  }
 }
 
 // Use PROGMEM to specify that this is stored in program space, the startup sequence is ordered as

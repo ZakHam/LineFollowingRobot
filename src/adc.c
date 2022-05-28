@@ -7,8 +7,8 @@ void adc_init() {
   // Set reference to AVcc = 5V
   ADMUX |= _BV(REFS0);
 
-  // Disable the digital input buffer on ADC 0
-  DIDR0 |= _BV(ADC0D);
+  // Disable the digital input buffer on ADC 5 -> 0
+  DIDR0 |= 0x3f;
 
   // Enable the ADC, and set the clock pre-scaler to 128.
   ADCSRA |= _BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
